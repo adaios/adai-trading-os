@@ -3,3 +3,11 @@
 __pycache__/
 *.pyc
 node_modules/
+
+# 临时处理目录（CLAUDE.md 禁止在 temp 下创建）
+temp/_chunks/
+temp/_*/
+
+# 临时脚本残留
+temp/_merge.*
+temp/_do_merge.*
