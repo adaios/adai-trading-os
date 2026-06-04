@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\\(Get-Content \"D:\\\\Projects\\\\adai-trading-os\\\\temp\\\\2025-04-30\\\\2025-04-30_1_文稿.txt\" -Raw\\) -replace \"`r`n\", \"`n\")",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
