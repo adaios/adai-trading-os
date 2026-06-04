@@ -31,8 +31,7 @@ processed/
 在开始处理之前：
 
 1. 检查 manual/glossary/ 目录中是否有术语修正记录
-2. 检查 manual/rules/ 目录中是否有规则修正记录
-3. 如有修正，在生成 glossary 和 rules 时使用修正后的正确表述
+2. 如有修正，在生成 glossary 和 rules 时使用修正后的正确表述
 
 ---
 
@@ -156,6 +155,38 @@ rules/
 
 ---
 
+# Step 4.5：融合 glossary
+
+**⚠️ 新增步骤，用于保持 glossary/current/ 与 manual/glossary/ 一致。**
+
+详见 prompts/fuse_glossary.md。
+
+操作：
+
+1. 读取 manual/glossary/ 下所有修正记录
+2. 读取 glossary/*.glossary.md 中本次新增的自动术语
+3. 与 glossary/current/glossary.md 融合
+4. 以 manual 定义为最高优先级
+5. 输出到 glossary/current/glossary.md
+
+---
+
+# Step 4.6：校准 rules
+
+**⚠️ 新增步骤，消除 rules 与 glossary/current/ 之间的语义漂移。**
+
+详见 prompts/calibrate_rules.md。
+
+操作：
+
+1. 以 glossary/current/glossary.md 为唯一术语定义来源
+2. 检查 rules/ 下所有文件中的术语用法是否与 current glossary 一致
+3. 存在冲突时以 current glossary 为准
+4. 删除模糊表达、不可执行规则、重复规则
+5. 使用 `[[]]` 标注关联术语
+
+---
+
 # Step 5：创建 processed 标记
 
 例如：
@@ -207,12 +238,14 @@ echo "  - 短期观点/事件解读 → 跳过"
 处理完成后必须清理以下残留：
 
 1. 删除 temp/_chunks/ 目录（如果存在）
-2. 删除 cleaned/ 目录中的 part_*_cleaned.md 等非标准命名文件
-3. 删除任何处理过程中产生的临时工作目录
+2. 删除 temp/ 下所有日期子目录（如 temp/2025-04-23/）中的 .txt 拆分文件
+3. 删除 cleaned/ 目录中的 part_*_cleaned.md 等非标准命名文件
+4. 删除任何处理过程中产生的临时工作目录
 
 清理原则：
 
 * 只保留按标准命名的输出文件（`日期_标题.cleaned.md`）
+* temp/ 目录保留合并后的 .md 文件，用于下次参考
 * 不保留拆分文件、中间文件、失败重试的残留
 * 不提示用户，自动执行
 

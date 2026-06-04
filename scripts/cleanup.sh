@@ -12,7 +12,10 @@ find "$cleaned_dir" -name "part_*" -type f -delete 2>/dev/null
 # 2. 删除 temp/_chunks/
 rm -rf "$temp_dir/_chunks" 2>/dev/null
 
-# 3. 删除其他临时工作目录
+# 3. 删除 temp/ 下所有日期子目录中的 .txt 拆分文件（保留 .md 合并文件）
+find "$temp_dir" -maxdepth 2 -name "*.txt" -type f -delete 2>/dev/null
+
+# 4. 删除其他临时工作目录
 for d in "$temp_dir"/_*; do
   [ -d "$d" ] && rm -rf "$d" 2>/dev/null
 done

@@ -27,12 +27,20 @@
   不改变原文结构。
 
 * glossary/
-  交易术语库。
+  交易术语库（按课程归档）。
   自动提取术语并生成定义。
+  每个文件对应一堂课，用于存档和增量回溯。
+
+* glossary/current/
+  融合后的统一术语库（唯一有效定义来源）。
+  由 auto glossary + manual 人工修正融合而成。
+  定期从 glossary/*.glossary.md + manual/glossary/*.md 生成。
+  所有 rules 和 system 以 glossary/current/ 为准。
 
 * rules/
   交易规则库。
   从课程中提炼明确规则。
+  每批处理完成后，必须基于 glossary/current/ 执行校准（calibrate_rules 流程），确保术语一致性。
 
 * system/
   最终交易系统。
@@ -81,11 +89,6 @@
 * 保留案例
 * 保留失败案例
 
-处理前检查：
-
-* 检查 manual/glossary/ 和 manual/rules/ 下是否有修正记录
-* 如有，先加载修正记录，确保输出使用正确术语
-
 术语提取原则：
 
 * 自动发现交易术语
@@ -100,6 +103,50 @@
 * 不保留模糊情绪表达
 * 不创造原文不存在的规则
 
+触发点：
+
+项目有两个主动触发点，对应三种流程模式。
+
+一、raw/ 新增文件 → 新课程处理流程
+
+当 raw/ 目录新增原始课程文件时，执行 prompts/process_all_courses.md 流程：
+
+1. Step 1：生成 cleaned
+2. Step 2：提取 glossary（与旧 glossary 增量合并）
+3. Step 3：提炼 rules
+4. Step 4：更新 system
+5. **Step 4.5：融合 glossary**（执行 prompts/fuse_glossary.md —— 将新术语与 manual 修正融合，重新生成 glossary/current/）
+6. **Step 4.6：校准 rules**（执行 prompts/calibrate_rules.md —— 基于 glossary/current/ 校准所有 rules）
+7. Step 5：创建 processed 标记
+8. Step 6：清理
+
+二、manual/glossary/ 新增文件 → 术语修正后重校准
+
+当 manual/glossary/ 下新增人工修正记录时：
+
+1. 执行 prompts/fuse_glossary.md —— 重新融合，更新 glossary/current/
+2. 执行 prompts/calibrate_rules.md —— 基于新定义校准所有 rules
+3. 如果涉及 system 已有规则，更新 system
+
+三、批量全流程（少用）
+
+从 temp/ 原始文稿到 system 的完整批处理。按日期顺序处理 raw/ 中所有未标记 .done 的文件。
+
+详见 prompts/process_all_courses.md。
+
+处理前检查：
+
+* 检查 manual/glossary/ 下是否有修正记录
+* 如有，先加载修正记录，确保输出使用正确术语
+
 最终目标：
 
 形成一个长期稳定、可执行、可复盘的个人交易系统。
+
+季度收敛：
+
+每季度执行一次 system 收敛：
+* 去重：同一条规则只保留一条
+* 升级：后期课程修正前期的，用新版本
+* 剔除：短期市场观点不留
+* 归档：收敛前的完整版本保存到 system/archive/

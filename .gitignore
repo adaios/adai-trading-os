@@ -1,5 +1,6 @@
 .DS_Store
 .obsidian/workspace.json
+.obsidian/graph.json
 __pycache__/
 *.pyc
 node_modules/
