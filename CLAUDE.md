@@ -198,7 +198,7 @@ comm -12 /tmp/new_terms.txt /tmp/old_terms.txt
 # 有输出 → 必须在旧 glossary 文件中追加增量更新，否则不允许进入 Step 5
 ```
 
-**② 人工：审查环节** — 通知用户审查术语，**流程在此暂停，等待用户确认后继续**：
+**② 人工：审查环节** — 通知用户审查术语：
 
 审查要点：
 1. 打开新生成的 `glossary/YYYY-MM-DD_主题.glossary.md`，检查术语定义是否准确
@@ -208,7 +208,7 @@ comm -12 /tmp/new_terms.txt /tmp/old_terms.txt
 5. 不修改 AI 自动提取的 `glossary/*.glossary.md` 文件
 6. 修正记录在 Step 5 融合时自动覆盖自动定义
 
-**跨课程文件：** 横跨多课的通用内容（如口语化特色词汇）放 `特色词汇.md` 等独立文件，不受日期命名约束。
+用户审查完毕后通知我继续，接着跑 Step 5-9。
 
 ### 第三阶段：校准（串行）
 
@@ -236,16 +236,13 @@ comm -12 /tmp/new_terms.txt /tmp/old_terms.txt
 可考虑通过 `Workflow` 工具编排全流程，减少阶段间的人工等待：
 
 ```
-阶段1: Step 1 → Step 2 → Step 3 + Step 4 (并行)
-                             │
-                             ▼
-                         审查环节(人工) → 增量验证
-                             │
-                             ▼
-阶段2: Step 5 → Step 6(→rules验证) → Step 7
-                             │
-                             ▼
-阶段3: Step 8 + Step 9 (并行)
+阶段1: Step 1 → Step 2 → Step 3 + Step 4 (并行)  →  通知用户审查
+                                                          │
+                                                          ▼
+                                                      用户确认后
+                                                          │
+                                                          ▼
+阶段2: Step 5 → Step 6(→rules验证) → Step 7 → Step 8 + Step 9
 ```
 
 最终目标：
