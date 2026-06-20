@@ -105,39 +105,96 @@
 
 触发点：
 
-项目有两个主动触发点，对应三种流程模式。
+项目有两个主动触发点。
 
-一、raw/ 新增文件 → 新课程处理流程
+### 触发点一：temp/ 新增日期目录 → 完整批处理流程
 
-当 raw/ 目录新增原始课程文件时，执行 prompts/process_all_courses.md 流程：
+当 temp/ 下出现新日期目录（如 `2025-08-06/`），触发完整批处理。
 
-1. Step 1：生成 cleaned
-2. Step 2：提取 glossary（与旧 glossary 增量合并）
-3. Step 3：提炼 rules
-4. Step 4：更新 system
-5. **Step 4.5：融合 glossary**（执行 prompts/fuse_glossary.md —— 将新术语与 manual 修正融合，重新生成 glossary/current/）
-6. **Step 4.6：校准 rules**（执行 prompts/calibrate_rules.md —— 基于 glossary/current/ 校准所有 rules）
-7. Step 5：创建 processed 标记
-8. Step 6：清理
+检测方式：扫描 temp/ 下所有日期目录，与 `processed/*.done` 及 `temp/.done/` 对比，
+无对应 .done 标记的即为新目录。
 
-二、manual/glossary/ 新增文件 → 术语修正后重校准
+> 新目录的自动命名：从课程前几百行自动提取主题句，如"今天的主题是XXX" → 生成 `YYYY-MM-DD_主题.md`。
+
+#### 第一阶段：输入
+
+| 步骤 | 内容 | 产出 |
+|:----:|:----|:----|
+| Step 1 | 扫描 temp/ 新增日期目录 → 合并 .txt 为 raw/ 文件 | `raw/YYYY-MM-DD_主题.md` |
+
+#### 第二阶段：产出（可并行）
+
+| 步骤 | 内容 | 依赖 | 产出 |
+|:----:|:----|:----|:----|
+| Step 2 | 生成 cleaned（最低限度清洗） | Step 1 | `cleaned/*.cleaned.md` |
+| Step 3 | 提取 glossary（增量合并旧术语） | **Step 2** | `glossary/*.glossary.md` |
+| Step 4 | 提炼 rules | **Step 2** | `rules/*.rules.md` |
+
+Step 3/4 无依赖关系，**可并行执行**。
+
+#### 审查环节（人工介入）
+
+**⚠️ 必须在 Step 5 之前人工完成：**
+
+Step 3 完成后，审查 AI 新提取的术语是否有误。如需修正：
+1. 在 `manual/glossary/` 下创建修正记录文件
+2. 参见已有示例（如 `B1.md`、`顶部大风车.md`）
+3. 不修改 AI 自动提取的 `glossary/*.glossary.md` 文件
+4. 修正记录会在 Step 5 融合时自动覆盖自动定义
+
+#### 第三阶段：校准（串行）
+
+| 步骤 | 内容 | 依赖 | 产出 |
+|:----:|:----|:----|:----|
+| Step 5 | **融合 glossary**（fuse_glossary） | Step 3 | `glossary/current/glossary.md` |
+| Step 6 | **校准 rules**（calibrate_rules） | Step 4 + Step 5 | 更新 `rules/*.rules.md` 术语引用 |
+| Step 7 | **更新 system** | Step 6 | `system/trading-system.md` |
+
+⚠️ Step 5 前必须先备份 `glossary/current/glossary.md`（fusion 操作不可逆）。
+
+#### 第四阶段：收尾（可并行）
+
+| 步骤 | 内容 | 产出 |
+|:----:|:----|:----|
+| Step 8 | 创建 .done 标记 | `processed/*.done` + `temp/.done/*` |
+| Step 9 | 清理 | 删除 temp 拆分文件、非标准输出、中间残留 |
+
+---
+
+### 触发点二：manual/glossary/ 新增文件 → 术语修正后重校准
 
 当 manual/glossary/ 下新增人工修正记录时：
 
-1. 执行 prompts/fuse_glossary.md —— 重新融合，更新 glossary/current/
-2. 执行 prompts/calibrate_rules.md —— 基于新定义校准所有 rules
-3. 如果涉及 system 已有规则，更新 system
+1. **Step 5：融合 glossary**（重新融合，以 manual 为准，更新 glossary/current/）
+2. **Step 6：校准 rules**（基于新 current 校准所有 rules）
+3. **Step 7：更新 system**（涉及 system 已有规则时才走）
 
-三、批量全流程（少用）
-
-从 temp/ 原始文稿到 system 的完整批处理。按日期顺序处理 raw/ 中所有未标记 .done 的文件。
-
-详见 prompts/process_all_courses.md。
-
-处理前检查：
+### 处理前检查
 
 * 检查 manual/glossary/ 下是否有修正记录
 * 如有，先加载修正记录，确保输出使用正确术语
+
+### 处理顺序
+
+必须按照文件日期顺序处理。课程体系具有演化过程，后期内容可能修正前期规则。
+
+Step 1 扫描新增目录时需按日期排序，先处理旧日期再处理新日期。
+
+### 执行优化
+
+可考虑通过 `Workflow` 工具编排全流程，减少阶段间的人工等待：
+
+```
+阶段1: Step 1 (合并+命名)  →  Step 2 (cleaned)  →  Step 3 + Step 4 (并行)
+                                                       │
+                                                       ▼
+                         阶段2: Step 5 → Step 6 → Step 7
+                                                       │
+                                                       ▼
+                         阶段3: Step 8 + Step 9 (并行)
+```
+
+（Workflow 编排将在后续迭代中完善。）
 
 最终目标：
 

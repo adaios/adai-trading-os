@@ -2,27 +2,15 @@
 
 任务：
 
-请扫描 raw/ 目录中的所有文件（.txt 和 .md）。
+请扫描 temp/ 目录中的所有日期目录（如 `2025-08-06/`）。
+
+检测方式：对比 `temp/.done/` 和 `processed/*.done`，无对应标记的即为新增课程。
 
 处理规则：
 
-1. 检查 processed/ 是否存在对应 .done 文件
-
-例如：
-
-raw/
-2025-04-23_大富翁导论.md
-
-对应：
-
-processed/
-2025-04-23_大富翁导论.done
-
-如果存在：
-跳过。
-
-如果不存在：
-继续处理。
+1. 检查 temp/.done/ 是否存在对应 .done 文件（或 processed/ 中对应 .done 文件）
+2. 如存在：跳过。
+3. 如不存在：继续处理。
 
 ---
 
@@ -35,7 +23,33 @@ processed/
 
 ---
 
-## Step 1：生成 cleaned 文件
+## 处理顺序
+
+必须按照文件日期顺序处理。
+
+原因：课程体系具有演化过程，后期内容可能修正前期规则。
+
+Step 1 扫描新增目录时需按日期排序，先处理旧日期再处理新日期。
+
+---
+
+## 第一阶段：输入 + 产出
+
+### Step 1：扫描 temp/ 并合并到 raw/
+
+1. 扫描 temp/ 下所有无 .done 标记的日期目录（格式：`YYYY-MM-DD/`）
+2. 每个目录下可能有多个 .txt 文件（按时间拆分），按文件名排序合并
+3. 自动提取课程主题：扫描前几百行内容，寻找"今天的主题是""咱们今天讲""今天教"等关键句
+4. 合并输出到 `raw/YYYY-MM-DD_主题.md`
+5. 合并后的 .md 文件保留在 temp/ 日期目录中作为参考
+
+---
+
+## 第二阶段：产出（可并行）
+
+### Step 2：生成 cleaned 文件
+
+**依赖：** Step 1（需要先合并 raw）
 
 输出到：
 
@@ -61,7 +75,7 @@ cleaned/
 
 ---
 
-# Step 2：提取 glossary
+### Step 3：提取 glossary
 
 输出到：
 
@@ -107,7 +121,7 @@ grep "^## " glossary/*.glossary.md | grep "术语名"
 
 ---
 
-# Step 3：提炼 rules
+### Step 4：提炼 rules
 
 输出到：
 
@@ -123,7 +137,56 @@ rules/
 
 ---
 
-# Step 4：更新 system
+## 第三阶段：校准（串行）
+
+### ⚠️ 审查环节（人工介入，在 Step 5 之前完成）
+
+Step 3（glossary）和 Step 4（rules）完成后，审查 AI 自动提取的术语是否有误：
+
+1. 打开新生成的 `glossary/YYYY-MM-DD_主题.glossary.md`，检查术语定义是否准确
+2. 如需修正，在 `manual/glossary/` 下创建修正记录文件
+3. 参考已有记录格式（如 `manual/glossary/B1.md`、`manual/glossary/顶部大风车.md`）
+4. 明确修正的术语名、正确定义和关键特征
+5. 不修改 `glossary/*.glossary.md` 原始文件——修正记录在 Step 5 融合时自动覆盖
+
+---
+
+### Step 5：融合 glossary
+
+**⚠️ 执行前先备份 `glossary/current/glossary.md`（cp 备份到 .bak），fusion 操作不可逆。**
+
+详见 prompts/fuse_glossary.md。
+
+操作：
+
+1. 读取 manual/glossary/ 下所有修正记录
+2. 读取 glossary/*.glossary.md 中本次新增的自动术语
+3. 与 glossary/current/glossary.md 融合
+4. 以 manual 定义为最高优先级
+5. 输出到 glossary/current/glossary.md
+
+**注意事项：**
+- 融合时必须做去重：同一条术语名只保留一个条目
+- 跳过"增量更新"、"附录"、"注意事项"等非术语标题
+- 保留所有增量更新记录在对应术语条目中
+
+---
+
+### Step 6：校准 rules
+
+详见 prompts/calibrate_rules.md。
+
+操作：
+
+1. 以 glossary/current/glossary.md 为唯一术语定义来源
+2. 检查 rules/ 下所有文件中的术语用法是否与 current glossary 一致
+3. 存在冲突时以 current glossary 为准
+4. 删除模糊表达、不可执行规则、重复规则
+5. 使用 `[[]]` 标注关联术语
+
+---
+
+### Step 7：更新 system
 
 要求：
 
@@ -155,58 +218,30 @@ rules/
 
 ---
 
-# Step 4.5：融合 glossary
+## 第四阶段：收尾（可并行）
 
-**⚠️ 新增步骤，用于保持 glossary/current/ 与 manual/glossary/ 一致。**
+### Step 8：创建 processed 标记
 
-详见 prompts/fuse_glossary.md。
+创建两个标记：
 
-操作：
-
-1. 读取 manual/glossary/ 下所有修正记录
-2. 读取 glossary/*.glossary.md 中本次新增的自动术语
-3. 与 glossary/current/glossary.md 融合
-4. 以 manual 定义为最高优先级
-5. 输出到 glossary/current/glossary.md
-
----
-
-# Step 4.6：校准 rules
-
-**⚠️ 新增步骤，消除 rules 与 glossary/current/ 之间的语义漂移。**
-
-详见 prompts/calibrate_rules.md。
-
-操作：
-
-1. 以 glossary/current/glossary.md 为唯一术语定义来源
-2. 检查 rules/ 下所有文件中的术语用法是否与 current glossary 一致
-3. 存在冲突时以 current glossary 为准
-4. 删除模糊表达、不可执行规则、重复规则
-5. 使用 `[[]]` 标注关联术语
-
----
-
-# Step 5：创建 processed 标记
-
-例如：
-
-processed/
-2025-04-23_大富翁导论.done
+```
+processed/2025-04-23_大富翁导论.done
+temp/.done/2025-04-23
+```
 
 文件内容：
 
+```
 processed at: 当前时间
+```
 
 ---
 
-# Step 5.5：完整性验证（新增，防止遗漏）
+### 完整性验证（Step 8 执行前检查）
 
-**在 Step 6 清理之前，必须先执行以下验证：**
+**清理之前必须先执行以下验证：**
 
 ```
-cd /Users/adai/Projects/adai-trading-os
-
 # 验证1：glossary 增量更新检查
 echo "=== 检查本次课程术语是否与旧 glossary 重叠 ==="
 # 提取本次新 glossary 的术语
@@ -229,23 +264,25 @@ echo "  - 短期观点/事件解读 → 跳过"
 
 1. ✅ glossary 中重叠的术语已做增量更新（新旧文件都要修改）
 2. ✅ system 已追加本次的长期稳定规则（至少1条，除非全是短期观点）
-3. ✅ 检查通过后，再进入 Step 6
+3. ✅ 检查通过后，再进入 Step 9
 
 ---
 
-# Step 6：清理临时文件
+### Step 9：清理临时文件
 
 处理完成后必须清理以下残留：
 
 1. 删除 temp/_chunks/ 目录（如果存在）
-2. 删除 temp/ 下所有日期子目录（如 temp/2025-04-23/）中的 .txt 拆分文件
-3. 删除 cleaned/ 目录中的 part_*_cleaned.md 等非标准命名文件
-4. 删除任何处理过程中产生的临时工作目录
+2. 删除 temp/ 下所有日期子目录中的 .txt 拆分文件和 .mp4/.aac 等原始媒体文件
+3. **保留** temp/ 日期目录本身和其中的合并 .md 文件（用于下次参考）
+4. 删除 cleaned/ 目录中的 part_*_cleaned.md 等非标准命名文件
+5. 删除任何处理过程中产生的临时工作目录
+6. 删除 glossary/current/glossary.md.bak（如果存在）
 
 清理原则：
 
 * 只保留按标准命名的输出文件（`日期_标题.cleaned.md`）
-* temp/ 目录保留合并后的 .md 文件，用于下次参考
+* temp/ 日期目录保留合并后的 .md 文件
 * 不保留拆分文件、中间文件、失败重试的残留
 * 不提示用户，自动执行
 
@@ -255,9 +292,9 @@ bash scripts/cleanup.sh
 
 ---
 
-重要原则：
+## 重要原则
 
-1. 永远不删除 raw 原始数据
+1. 永远不删除 raw/ 原始数据
 2. glossary 可以持续演化
 3. rules 允许逐步优化
 4. system 必须保持极简
@@ -265,12 +302,3 @@ bash scripts/cleanup.sh
 6. 不做荐股
 7. 不预测市场
 8. 保持规则边界清晰
-
-处理顺序：
-
-必须按照文件日期顺序处理。
-
-原因：
-
-课程体系具有演化过程。
-后期内容可能修正前期规则。
