@@ -3,7 +3,11 @@
     "allow": [
       "Bash(ffmpeg *)",
       "Bash(git init *)",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "WebSearch",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(git *)",
+      "Bash(grep -v \":0$\")"
     ]
   }
 }
