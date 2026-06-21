@@ -97,9 +97,9 @@
 ```
 01-raw → 02-cleaned → 03-glossary → 04-rules → 05-system
                              ↑            ↑
-                        07-manual/     07-manual/
-                         glossary       rules → 07-manual/system
-                         审核修正      审核修正        直接覆盖
+                        07-manual/   07-manual/
+                        glossary     rules → 07-manual/system
+                        审核修正    审核修正        直接覆盖
 ```
 
 ### 依赖链（单向，不可逆）
