@@ -10,6 +10,9 @@ node_modules/
 .claude/projects/
 .claude/settings.local.json
 
+# 00-temp 原始文稿（不提交到 git，各电脑独立）
+00-temp/
+
 # 原始媒体文件（不提交到 git）
 *.mp4
 *.aac
