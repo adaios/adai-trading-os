@@ -177,6 +177,7 @@ Step 1  raw  ──→  Step 2  cleaned  ──→  Step 3  glossary
 
 记录该课对交易系统的增量贡献，按模块图六层定位：
 
+**底层认知层贡献：** A股底层逻辑、市场参与者认知、新故事方向
 **择时层贡献：** 择时体系相关（活跃市值、入场/离场信号、宏观判断）
 **买入层贡献：** 入场方式相关（B1/B2/B3、砖形图、买点依据）
 **应对层贡献：** 买入后的处理（没涨/盈转亏/止损/放飞/S1/滴滴/破线）
@@ -270,6 +271,8 @@ Step 1  raw  ──→  Step 2  cleaned  ──→  Step 3  glossary
 ```
 基于融合后的术语表 + 校准后的规则 + 07-manual/system
        ↓
+同步更新 05-system/outline.md（确保大纲与当前术语库一致）
+       ↓
 重建 05-system/trading-system.md
        ↓
 旧版本归档到 05-system/archive/
@@ -296,9 +299,9 @@ Step 1  raw  ──→  Step 2  cleaned  ──→  Step 3  glossary
 ### 重建触发链（按需触发，由用户确认）
 
 ```
-07-manual/glossary/ 变更 → 03-glossary/current/ 重融合 → 04-rules 重校准 → 05-system 重建
-07-manual/rules/ 变更 → 04-rules 重校准 → 05-system 重建
-07-manual/system/ 变更 → 05-system 直接覆盖（不做自动化处理）
+07-manual/glossary/ 变更 → 03-glossary/current/ 重融合 → 04-rules 重校准 → 05-system 重建（含大纲同步）
+07-manual/rules/ 变更 → 04-rules 重校准 → 05-system 重建（含大纲同步）
+07-manual/system/ 变更 → 05-system 直接覆盖（不做自动化处理），同时同步 outline.md
 ```
 
 ### 手册状态约定
