@@ -222,10 +222,12 @@ Step 1  raw  ──→  Step 2  cleaned  ──→  Step 3  glossary
 
 根据当前所有已处理课程（含本课），更新 `05-system/trading-system.md`：
 
-1. **如果 `07-manual/system/trading-system.md` 有内容**，以 manual 结构为准（少妇战法六步为主干），仅在其框架下填充新课程的贡献记录
-2. **如果 `07-manual/system/trading-system.md` 无内容**，遍历 `03-glossary/*.glossary.md` 的 `## 本课系统贡献` 区块，按框架层/工具层/认知层分类汇总，去重（后期课程版本优先）
-3. 每课贡献记录追加到附录，不干扰正文结构
-4. 旧版本归档到 `05-system/archive/`
+1. **读取 `05-system/outline.md`**（标准知识地图），了解课程全貌和每层覆盖情况
+2. **如果 `07-manual/system/trading-system.md` 有内容**，以 manual 结构为准（少妇战法六步为主干），仅在其框架下填充新课程的贡献记录
+3. **如果 `07-manual/system/trading-system.md` 无内容**，遍历 `03-glossary/*.glossary.md` 的 `## 本课系统贡献` 区块，按模块图六层分类汇总，去重（后期课程版本优先）
+4. 每课贡献记录追加到附录，不干扰正文结构
+5. 旧版本归档到 `05-system/archive/`
+6. **完整性检查**：更新后对照 `05-system/outline.md` 逐层对比，确认系统正文没有遗漏本课的关键知识点
 
 **产出：** `05-system/trading-system.md`
 
